@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.log
+*.bak.*
+.env
+.venv/
+venv/
+dist/
+build/
+*.tar

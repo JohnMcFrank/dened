@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: proxy-list
+data:
+  proxies.txt: |
+    proxy1:port
+    proxy2:port
+    proxy3:port

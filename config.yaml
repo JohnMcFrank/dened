@@ -1,0 +1,31 @@
+target:
+  url: "https://httpbin.org/get"
+  timeout: 10
+  method: "GET"
+
+load_config:
+  mode: "middle"  # low, middle, hard
+  requests_per_second: 5
+  duration: 30  # secondes
+  max_concurrent: 100
+
+bandwidth:
+  max_bandwidth_mb: 1000  # Mbps
+  bandwidth_buffer: 0.85  # 85% de la bande passante max
+
+memory:
+  max_memory_percent: 50  # 50% de la mémoire max
+  memory_buffer: 0.50     # 50% de la mémoire disponible
+
+proxy:
+  rotation_mode: "random"  # round_robin ou random
+  health_check_interval: 300  # secondes
+  max_retries: 3
+
+monitoring:
+  dashboard_port: 8080
+  stats_refresh_interval: 10  # secondes
+
+pods:
+  min_pods: 5
+  max_pods: 100

@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ip-rotator-config
+data:
+  config.yaml: |
+    target:
+      url: "https://httpbin.org/get"
+      timeout: 10
+      method: "GET"
+
+    load_config:
+      mode: "middle"
+      requests_per_second: 5
+      duration: 30
+      max_concurrent: 100
+
+    bandwidth:
+      max_bandwidth_mb: 1000
+      bandwidth_buffer: 0.85
+
+    memory:
+      max_memory_percent: 50
+      memory_buffer: 0.50
+
+    proxy:
+      rotation_mode: "random"
+      health_check_interval: 300
+      max_retries: 3
+
+    monitoring:
+      dashboard_port: 8080
+      stats_refresh_interval: 10
+
+    pods:
+      min_pods: 5
+      max_pods: 100
