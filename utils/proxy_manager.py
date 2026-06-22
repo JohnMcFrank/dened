@@ -20,8 +20,18 @@ class ProxyManager:
         proxy = (proxy or "").strip()
         if not proxy or proxy.startswith("#"):
             return None
-        if proxy.startswith("http://") or proxy.startswith("https://"):
+
+        valid_prefixes = (
+            "http://",
+            "https://",
+            "socks4://",
+            "socks5://",
+            "socks5h://",
+        )
+
+        if proxy.startswith(valid_prefixes):
             return proxy
+
         return f"http://{proxy}"
 
     def load_from_file(self, path: str) -> int:
@@ -62,9 +72,16 @@ class ProxyManager:
             return proxy
 
     def mark_failed(self, proxy: Optional[str]) -> None:
-        if proxy:
-            with self._lock:
-                self._failed.add(proxy)
+        if not proxy:
+            return
+
+        # Tor est un proxy local sidecar. On ne le bannit pas définitivement,
+        # sinon un simple timeout rendrait le pod inutilisable.
+        if proxy.startswith(("socks5://127.0.0.1", "socks5h://127.0.0.1")):
+            return
+
+        with self._lock:
+            self._failed.add(proxy)
 
     def mark_working(self, proxy: Optional[str]) -> None:
         if proxy:
@@ -81,7 +98,8 @@ class ProxyManager:
                 "proxies": [
                     {
                         "proxy": p,
-                        "status": "failed" if p in self._failed else "available"
+                        "type": "tor" if p.startswith(("socks5://", "socks5h://")) else "http",
+                        "status": "failed" if p in self._failed else "available",
                     }
                     for p in self._proxies
                 ],

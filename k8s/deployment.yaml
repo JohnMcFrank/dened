@@ -14,6 +14,7 @@ spec:
       labels:
         app: dened
     spec:
+      serviceAccountName: dened-sa
       containers:
         - name: dened
           image: dened:latest
@@ -26,6 +27,14 @@ spec:
               value: /config/config.yaml
             - name: LOG_LEVEL
               value: INFO
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
           volumeMounts:
             - name: dened-config
               mountPath: /config
@@ -59,6 +68,13 @@ spec:
           ports:
             - containerPort: 9050
               name: socks
+            - containerPort: 9051
+              name: control
+          volumeMounts:
+            - name: tor-config
+              mountPath: /etc/tor/torrc
+              subPath: torrc
+              readOnly: true
           resources:
             requests:
               cpu: "100m"
@@ -74,3 +90,6 @@ spec:
         - name: dened-proxies
           configMap:
             name: dened-proxies
+        - name: tor-config
+          configMap:
+            name: tor-config

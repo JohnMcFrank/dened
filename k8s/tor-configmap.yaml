@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tor-config
+data:
+  torrc: |
+    SocksPort 0.0.0.0:9050
+    ControlPort 127.0.0.1:9051
+    CookieAuthentication 0
+    MaxCircuitDirtiness 60
+    NewCircuitPeriod 30
+    AvoidDiskWrites 1

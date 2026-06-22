@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: tor-config
-data:
-  torrc: |
-    SocksPort 9050
-    ControlPort 9051
