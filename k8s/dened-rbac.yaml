@@ -6,20 +6,26 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: dened-pod-reader
+  name: dened-control-role
 rules:
   - apiGroups: [""]
     resources: ["pods"]
     verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments/scale"]
+    verbs: ["get", "patch", "update"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: dened-pod-reader-binding
+  name: dened-control-binding
 subjects:
   - kind: ServiceAccount
     name: dened-sa
 roleRef:
   kind: Role
-  name: dened-pod-reader
+  name: dened-control-role
   apiGroup: rbac.authorization.k8s.io
