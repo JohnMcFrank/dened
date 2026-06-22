@@ -1,15 +1,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ip-rotator-service
+  name: dened-service
+  labels:
+    app: dened
 spec:
-  selector:
-    app: ip-rotator-tool
-  ports:
-  - port: 8080
-    targetPort: 8080
-    name: http
-  - port: 9090
-    targetPort: 9090
-    name: metrics
   type: ClusterIP
+  selector:
+    app: dened
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080

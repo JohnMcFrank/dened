@@ -1,59 +1,76 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ip-rotator-tool
+  name: dened
   labels:
-    app: ip-rotator-tool
+    app: dened
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ip-rotator-tool
+      app: dened
   template:
     metadata:
       labels:
-        app: ip-rotator-tool
+        app: dened
     spec:
       containers:
-      - name: ip-rotator
-        image: ip-rotator-tool:latest
-        imagePullPolicy: Never
-        ports:
-        - containerPort: 8080
-        - containerPort: 9090
-        env:
-        - name: CONFIG_FILE
-          value: "/config/config.yaml"
-        - name: PYTHONPATH
-          value: "/app/monitoring"
-        volumeMounts:
-        - name: config-volume
-          mountPath: /config
-        - name: proxy-list
-          mountPath: /proxies
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "200m"
-          limits:
-            memory: "1Gi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
+        - name: dened
+          image: dened:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: CONFIG_FILE
+              value: /config/config.yaml
+            - name: LOG_LEVEL
+              value: INFO
+          volumeMounts:
+            - name: dened-config
+              mountPath: /config
+              readOnly: true
+            - name: dened-proxies
+              mountPath: /proxies
+              readOnly: true
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 8
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 25
+            periodSeconds: 20
+
+        - name: tor
+          image: dperson/torproxy:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9050
+              name: socks
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
       volumes:
-      - name: config-volume
-        configMap:
-          name: ip-rotator-config
-      - name: proxy-list
-        configMap:
-          name: proxy-list
+        - name: dened-config
+          configMap:
+            name: dened-config
+        - name: dened-proxies
+          configMap:
+            name: dened-proxies

@@ -1,16 +1,15 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Copier les dépendances
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copier le code
 COPY . .
 
-# Exposer les ports
-EXPOSE 8080 9090
+EXPOSE 8080
 
-# Commande de démarrage
-CMD ["python", "main.py"]
+CMD ["gunicorn", "main:create_app()", "--bind", "0.0.0.0:8080", "--workers", "2", "--threads", "4", "--timeout", "60"]

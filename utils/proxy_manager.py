@@ -1,102 +1,88 @@
-import requests
 import random
-import time
 import threading
-from typing import List, Dict, Optional
-import logging
+from pathlib import Path
+from typing import Dict, List, Optional
+
 
 class ProxyManager:
-    def __init__(self, proxy_list: List[str] = None):
-        self.proxies = proxy_list or []
-        self.current_index = 0
-        self.failed_proxies = set()
-        self.proxy_lock = threading.Lock()
-        self.session = requests.Session()
-        self.logger = logging.getLogger(__name__)
-        
-    def add_proxy(self, proxy: str):
-        """Ajouter un proxy"""
-        if proxy not in self.proxies:
-            self.proxies.append(proxy)
-            
-    def remove_proxy(self, proxy: str):
-        """Supprimer un proxy"""
-        if proxy in self.proxies:
-            self.proxies.remove(proxy)
-            
-    def get_random_proxy(self) -> Optional[str]:
-        """Obtenir un proxy aléatoire"""
-        with self.proxy_lock:
-            if not self.proxies:
-                return None
-                
-            # Filtrer les proxies échoués
-            available_proxies = [p for p in self.proxies if p not in self.failed_proxies]
-            
-            if not available_proxies:
-                return None
-                
-            return random.choice(available_proxies)
-            
-    def get_next_proxy(self) -> Optional[str]:
-        """Obtenir le proxy suivant dans la liste"""
-        with self.proxy_lock:
-            if not self.proxies:
-                return None
-                
-            proxy = self.proxies[self.current_index]
-            self.current_index = (self.current_index + 1) % len(self.proxies)
+    def __init__(self, proxies: Optional[List[str]] = None, rotation_mode: str = "round_robin"):
+        self._proxies: List[str] = []
+        self._failed: set[str] = set()
+        self._index = 0
+        self._lock = threading.Lock()
+        self.rotation_mode = rotation_mode if rotation_mode in {"round_robin", "random"} else "round_robin"
+
+        for proxy in proxies or []:
+            self.add_proxy(proxy)
+
+    @staticmethod
+    def normalize(proxy: str) -> Optional[str]:
+        proxy = (proxy or "").strip()
+        if not proxy or proxy.startswith("#"):
+            return None
+        if proxy.startswith("http://") or proxy.startswith("https://"):
             return proxy
-            
-    def test_proxy(self, proxy: str, timeout: int = 10) -> bool:
-        """
-        Tester si un proxy fonctionne
-        
-        Args:
-            proxy: Proxy à tester
-            timeout: Temps d'attente maximum
-            
-        Returns:
-            True si le proxy fonctionne, False sinon
-        """
-        try:
-            test_url = "http://httpbin.org/ip"
-            proxy_dict = {
-                "http": f"http://{proxy}",
-                "https": f"http://{proxy}"
-            }
-            
-            response = self.session.get(
-                test_url, 
-                proxies=proxy_dict, 
-                timeout=timeout
-            )
-            
-            return response.status_code == 200
-            
-        except Exception as e:
-            self.logger.warning(f"Proxy test failed: {proxy} - {str(e)}")
+        return f"http://{proxy}"
+
+    def load_from_file(self, path: str) -> int:
+        file_path = Path(path)
+        if not file_path.exists():
+            return 0
+
+        count = 0
+        for line in file_path.read_text(encoding="utf-8").splitlines():
+            before = len(self._proxies)
+            self.add_proxy(line)
+            if len(self._proxies) > before:
+                count += 1
+        return count
+
+    def add_proxy(self, proxy: str) -> bool:
+        normalized = self.normalize(proxy)
+        if not normalized:
             return False
-            
-    def mark_proxy_as_failed(self, proxy: str):
-        """Marquer un proxy comme échoué"""
-        with self.proxy_lock:
-            self.failed_proxies.add(proxy)
-            
-    def mark_proxy_as_working(self, proxy: str):
-        """Marquer un proxy comme fonctionnel"""
-        with self.proxy_lock:
-            if proxy in self.failed_proxies:
-                self.failed_proxies.remove(proxy)
-                
-    def get_working_proxies_count(self) -> int:
-        """Obtenir le nombre de proxies fonctionnels"""
-        with self.proxy_lock:
-            return len([p for p in self.proxies if p not in self.failed_proxies])
-            
-    def get_all_proxies_status(self) -> Dict:
-        """Obtenir le statut de tous les proxies"""
-        status = {}
-        for proxy in self.proxies:
-            status[proxy] = proxy not in self.failed_proxies
-        return status
+
+        with self._lock:
+            if normalized not in self._proxies:
+                self._proxies.append(normalized)
+                return True
+        return False
+
+    def get_proxy(self) -> Optional[str]:
+        with self._lock:
+            available = [p for p in self._proxies if p not in self._failed]
+            if not available:
+                return None
+
+            if self.rotation_mode == "random":
+                return random.choice(available)
+
+            proxy = available[self._index % len(available)]
+            self._index = (self._index + 1) % len(available)
+            return proxy
+
+    def mark_failed(self, proxy: Optional[str]) -> None:
+        if proxy:
+            with self._lock:
+                self._failed.add(proxy)
+
+    def mark_working(self, proxy: Optional[str]) -> None:
+        if proxy:
+            with self._lock:
+                self._failed.discard(proxy)
+
+    def status(self) -> Dict:
+        with self._lock:
+            return {
+                "total": len(self._proxies),
+                "available": len([p for p in self._proxies if p not in self._failed]),
+                "failed": len(self._failed),
+                "rotation_mode": self.rotation_mode,
+                "proxies": [
+                    {
+                        "proxy": p,
+                        "status": "failed" if p in self._failed else "available"
+                    }
+                    for p in self._proxies
+                ],
+            }

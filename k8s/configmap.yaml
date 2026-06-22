@@ -1,37 +1,61 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: ip-rotator-config
+  name: dened-config
 data:
   config.yaml: |
+    app:
+      name: dened
+      environment: kubernetes
+
+    server:
+      host: "0.0.0.0"
+      port: 8080
+
     target:
       url: "https://httpbin.org/get"
-      timeout: 10
-      method: "GET"
-
-    load_config:
-      mode: "middle"
-      requests_per_second: 5
-      duration: 30
-      max_concurrent: 100
-
-    bandwidth:
-      max_bandwidth_mb: 1000
-      bandwidth_buffer: 0.85
-
-    memory:
-      max_memory_percent: 50
-      memory_buffer: 0.50
 
     proxy:
-      rotation_mode: "random"
-      health_check_interval: 300
-      max_retries: 3
+      rotation_mode: "round_robin"
+      allow_direct_fallback: true
+      proxies: []
+      proxy_file: "/proxies/proxies.txt"
+
+    request:
+      timeout_seconds: 10
+      max_response_bytes: 200000
+      allowed_methods: ["GET", "POST"]
+
+    modes:
+      basic:
+        description: "1 requête toutes les X secondes"
+        memory_target_percent: 25
+        request_interval_seconds: 5
+        max_workers: 1
+        max_rps: 1
+        duration_seconds: null
+
+      fast:
+        description: "Nombre élevé de requêtes par seconde pendant une durée définie"
+        memory_target_percent: 50
+        request_interval_seconds: 0
+        max_workers: 8
+        max_rps: 20
+        duration_seconds: 60
+
+      extreme:
+        description: "Charge maximale contrôlée, durée illimitée jusqu'à arrêt manuel"
+        memory_target_percent: 80
+        request_interval_seconds: 0
+        max_workers: 16
+        max_rps: 50
+        duration_seconds: null
+
+    limits:
+      max_memory_percent: 85
+      max_cpu_percent: 90
+      safety_enabled: true
+      require_explicit_target: true
 
     monitoring:
-      dashboard_port: 8080
-      stats_refresh_interval: 10
-
-    pods:
-      min_pods: 5
-      max_pods: 100
+      log_interval_seconds: 30
