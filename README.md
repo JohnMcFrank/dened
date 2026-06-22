@@ -20,17 +20,16 @@ Chaque pod DENED contient :
 
 Architecture :
 
-┌───────────────────┐
-│ Pod DENED         │
-│                   │
-│  Application      │
-│       │           │
-│       ▼           │
-│     Tor           │
-│       │           │
-│       ▼           │
-│   Internet        │
-└───────────────────┘
+
+ Pod DENED         
+                   
+  Application      
+       │           
+       ▼           
+     Tor           
+       │           
+       ▼           
+   Internet       
 
 Chaque pod possède :
 
