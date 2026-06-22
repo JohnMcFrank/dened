@@ -64,6 +64,7 @@ URL cible utilisée par le scheduler.
 Exemple :
 
 https://check.torproject.org/api/ip
+
 Mode
 
 Trois modes sont disponibles.
@@ -126,6 +127,7 @@ Exemple :
 Signifie :
 
 60 secondes
+
 Pods souhaités
 
 Nombre de pods DENED à exécuter.
@@ -167,6 +169,7 @@ Exemple :
 4 pods × 5 RPS
 =
 20 RPS maximum
+
 Workers / pod
 
 Nombre de threads internes utilisés par chaque pod.
@@ -186,6 +189,7 @@ Valeurs recommandées :
 
 RPS 1 à 5
 Workers 1 à 4
+
 Méthode
 
 Méthode HTTP utilisée.
@@ -201,6 +205,7 @@ Envoi de données.
 Pour les tests classiques :
 
 GET recommandé
+
 Cartes Pods
 
 Chaque pod possède sa propre carte.
@@ -233,6 +238,7 @@ la carte du pod clignote
 afin de signaler le changement.
 
 Boutons
+
 Appliquer pods
 
 Modifie le nombre de pods Kubernetes.
@@ -240,6 +246,7 @@ Modifie le nombre de pods Kubernetes.
 Equivalent :
 
 kubectl scale deployment dened --replicas=X
+
 Démarrer sur tous les pods
 
 Démarre le scheduler sur tous les pods.
