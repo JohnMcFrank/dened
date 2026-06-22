@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tor-req-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tor-requestor
+  template:
+    metadata:
+      labels:
+        app: tor-requestor
+    spec:
+      containers:
+      - name: tor-requestor
+        image: python:3.9-slim
+        command: ["python", "/app/main.py"]
+        ports:
+        - containerPort: 8080
+        env:
+        - name: TOR_PROXY_PORT
+          value: "9050"
+        volumeMounts:
+        - name: tor-config
+          mountPath: /etc/tor
+        - name: app-code
+          mountPath: /app
+      volumes:
+      - name: tor-config
+        configMap:
+          name: tor-config
+      - name: app-code
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tor-req-service
+spec:
+  selector:
+    app: tor-requestor
+  ports:
+  - port: 8080
+    targetPort: 8080
